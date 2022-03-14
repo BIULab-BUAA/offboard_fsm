@@ -1,0 +1,34 @@
+#There are some params which will be loaded
+pos_ctrl/pid_pos_xy_p: 1.0
+
+pos_ctrl/pid_pos_z_p: 1.0
+
+pos_ctrl/pid_vel_xy_p: 1.5
+pos_ctrl/pid_vel_xy_i: 0.4
+pos_ctrl/pid_vel_xy_d: 0.8
+pos_ctrl/pid_vel_xy_ilim: 3.0
+
+pos_ctrl/pid_vel_z_p: 2.5
+pos_ctrl/pid_vel_z_i: 1.0
+pos_ctrl/pid_vel_z_d: 0.2
+pos_ctrl/pid_vel_z_ilim: 10.0
+
+pos_ctrl/tar_x: 0.0
+pos_ctrl/tar_y: 0.0
+pos_ctrl/tar_z: 2.0
+pos_ctrl/tar_yaw: 0.0
+
+pos_ctrl/min_thrust: 0.1
+pos_ctrl/max_thrust: 0.9
+
+pos_ctrl/max_xy_acc: 2.0
+pos_ctrl/max_xy_vel: 3.0
+pos_ctrl/max_z_vel: 3.0
+
+#############################  offb_fsm
+offb_fsm/flag_simulation: true
+offb_fsm/target_x: 0.2
+offb_fsm/target_y: 0.1
+offb_fsm/target_z: 2
+offb_fsm/target_yaw: 0.0
+

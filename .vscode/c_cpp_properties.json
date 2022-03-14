@@ -1,0 +1,40 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/xindong324/catkin_ws/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/planner/bspline_opt/include/**",
+        "/home/xindong324/catkin_ws/src/car_uav_ctrl/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/planner/plan_manage/include/**",
+        "/home/xindong324/catkin_ws/src/grid_path_searcher/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/uav_simulator/mockamap/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/uav_simulator/Utils/multi_map_server/include/**",
+        "/home/xindong324/catkin_ws/src/my_bsplineopt/include/**",
+        "/home/xindong324/catkin_ws/src/my_planmanage/include/**",
+        "/home/xindong324/catkin_ws/src/my_pathsearch/include/**",
+        "/home/xindong324/catkin_ws/src/my_planenv/include/**",
+        "/home/xindong324/catkin_ws/src/my_trajutil/include/**",
+        "/home/xindong324/catkin_ws/src/offboard_sample/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/planner/path_searching/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/planner/plan_env/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/uav_simulator/Utils/pose_utils/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/uav_simulator/Utils/quadrotor_msgs/include/**",
+        "/home/xindong324/catkin_ws/src/serial_mocap/include/**",
+        "/home/xindong324/catkin_ws/src/serial_nrf/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/uav_simulator/so3_control/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/uav_simulator/so3_quadrotor_simulator/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/planner/traj_utils/include/**",
+        "/home/xindong324/catkin_ws/src/ego-planner/src/uav_simulator/Utils/uav_utils/include/**",
+        "/home/xindong324/catkin_ws/src/zed-ros-wrapper/zed-ros-interfaces/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ],
+  "version": 4
+}

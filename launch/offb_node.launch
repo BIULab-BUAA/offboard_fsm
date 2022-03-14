@@ -1,0 +1,6 @@
+<launch> 
+	<node pkg="offboard_sample" type="offb_node" name="offb_node" output="screen"/> 
+	<node pkg="offboard_sample" type="keyboard.py" name="keyboard"  />
+	<rosparam file="$(find offboard_sample)/cfg/mission_cfg.yaml" command="load" />
+</launch>
+

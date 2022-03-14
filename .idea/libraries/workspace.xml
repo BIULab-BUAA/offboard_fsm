@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="workspace">
+    <CLASSES>
+      <root url="file://$USER_HOME$/src/ORB_SLAM3/Examples/ROS" />
+      <root url="file:///opt/ros/melodic/share" />
+      <root url="file://$PROJECT_DIR$/.." />
+    </CLASSES>
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../.." />
+    </SOURCES>
+  </library>
+</component>
