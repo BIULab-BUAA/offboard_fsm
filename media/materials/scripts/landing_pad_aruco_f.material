@@ -1,0 +1,15 @@
+material Cube/landing_pad_aruco_f
+{
+  receive_shadows off
+  technique
+  {
+    pass
+    {
+      texture_unit
+      {
+        texture fractal2.png
+      }
+    }
+  }
+}
+  

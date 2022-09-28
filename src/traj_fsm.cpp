@@ -2,42 +2,48 @@
  * @Author: xindong324
  * @Date: 2022-03-03 21:57:53
  * @LastEditors: xindong324
- * @LastEditTime: 2022-09-20 15:37:48
+ * @LastEditTime: 2022-09-19 20:32:48
  * @Description: file content
  */
-#include "offboard_sample/offboard_fsm.h"
+#include "offboard_sample/traj_fsm.h"
 
-OffboardFSM::OffboardFSM()
+TrajFSM::TrajFSM()
 {
 
 }
 
-OffboardFSM::~OffboardFSM()
+TrajFSM::~TrajFSM()
 {
 }
 
-void OffboardFSM::init(ros::NodeHandle &nh) {
+void TrajFSM::init(ros::NodeHandle &nh) {
     /*fsm param*/
     nh.param("offb_fsm/flag_simulation", flag_simulation_, true);
     nh.param("offb_fsm/target_x", target_pos_.position.x, 2.5);
     nh.param("offb_fsm/target_y", target_pos_.position.y, 2.5);
     nh.param("offb_fsm/target_z", target_pos_.position.z, 2.0);
     nh.param("offb_fsm/target_yaw", target_yaw_, 0.0);
+    nh.param("takeoff_height", takeoff_height_, 1.0);
+    ROS_INFO("TEST");
 
     trigger_ = false;
     start_mission_ = false;
     flag_emergency_stop_ = false;
+    has_quad_cmd_ = false;
     exec_state_ = INIT;
 
     /*init*/
-    pos_controller_.reset( new PosController(nh));
+    //pos_controller_.reset( new PosController(nh));
 
-    exec_timer_ = nh.createTimer(ros::Duration(0.01),&OffboardFSM::execFSMCallback, this); // 50Hz;
+    exec_timer_ = nh.createTimer(ros::Duration(0.01),&TrajFSM::execFSMCallback, this); // 50Hz;
 
-    local_position_sub_ = nh.subscribe("/mavros/local_position/pose", 10, &OffboardFSM::positionCallback, this);
-    local_velocity_sub_ = nh.subscribe("/mavros/local_position/velocity_local", 10, &OffboardFSM::localVelocityCallback, this);
-    state_sub_ = nh.subscribe("/mavros/state", 10, &OffboardFSM::stateCallback, this);
-    joy_sub_ = nh.subscribe("/keys", 10, &OffboardFSM::joyCallback, this);
+    local_position_sub_ = nh.subscribe("/mavros/local_position/pose", 10, &TrajFSM::positionCallback, this);
+    local_velocity_sub_ = nh.subscribe("/mavros/local_position/velocity_local", 10, &TrajFSM::localVelocityCallback, this);
+    
+    state_sub_ = nh.subscribe("/mavros/state", 10, &TrajFSM::stateCallback, this);
+    extent_state_sub_ = nh.subscribe("/mavros/extended_state", 10, &TrajFSM::extendedStateCallback, this);
+    joy_sub_ = nh.subscribe("/keys", 10, &TrajFSM::joyCallback, this);
+    quad_cmd_sub_ = nh.subscribe("pos_cmd", 10, &TrajFSM::quadCmdCallback, this);
 
     /************ publisher ******************/
     marker_pub_ = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
@@ -57,6 +63,14 @@ void OffboardFSM::init(ros::NodeHandle &nh) {
 
     att_raw_.type_mask = 0b00000111;
 
+    local_raw_.coordinate_frame = mavros_msgs::PositionTarget::FRAME_LOCAL_NED;
+    // local_raw_.type_mask = mavros_msgs::PositionTarget::IGNORE_VX | 
+    //                           mavros_msgs::PositionTarget::IGNORE_VY |
+    //                           mavros_msgs::PositionTarget::IGNORE_VZ |
+    //                           mavros_msgs::PositionTarget::IGNORE_AFX |
+    //                           mavros_msgs::PositionTarget::IGNORE_AFY |
+    //                           mavros_msgs::PositionTarget::IGNORE_AFZ |
+    //                           mavros_msgs::PositionTarget::IGNORE_YAW_RATE;
 
     ros::Rate rate(10);
     while(ros::ok() && current_state_.connected){
@@ -67,7 +81,7 @@ void OffboardFSM::init(ros::NodeHandle &nh) {
 
 }
 
-void OffboardFSM::positionCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
+void TrajFSM::positionCallback(const geometry_msgs::PoseStampedConstPtr &msg) {
     local_position_ = *msg;
 
     /****************pub marker*********************/
@@ -109,20 +123,48 @@ void OffboardFSM::positionCallback(const geometry_msgs::PoseStampedConstPtr &msg
     marker_pub_.publish(marker);
 }
 
-void OffboardFSM::localVelocityCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
+void TrajFSM::localVelocityCallback(const geometry_msgs::TwistStampedConstPtr &msg) {
     local_vel_ = *msg;
 }
 
-void OffboardFSM::stateCallback(const mavros_msgs::StateConstPtr &msg) {
+void TrajFSM::stateCallback(const mavros_msgs::StateConstPtr &msg) {
     current_state_ = *msg;
 }
 
-void OffboardFSM::joyCallback(const std_msgs::StringConstPtr &str) {
+void TrajFSM::extendedStateCallback(const mavros_msgs::ExtendedStateConstPtr &msg)
+{
+    extended_state_ = *msg;
+}
+
+void TrajFSM::quadCmdCallback(const quadrotor_msgs::PositionCommandConstPtr &msg)
+{
+    quad_command_ = *msg;
+    has_quad_cmd_ = true;
+
+    //static ros::Time time_last = ros::Time::now();
+    // 
+    
+    time_quad_cmd_ = ros::Time::now();
+}
+
+// Keyboard control 
+// A: start mission, take off
+// d: land
+// g: emergency stop
+// w: start mission
+
+
+void TrajFSM::joyCallback(const std_msgs::StringConstPtr &str) {
     if(str->data == "d" || str->data == "D")
     {
         trigger_ = false;
-        if(exec_state_ == MISSION) changeFSMExecState(EMERGENCY_STOP, "JOY");
-        else changeFSMExecState(LAND, "JOY");
+        changeFSMExecState(LAND, "JOY");
+    }
+    else if(str->data == "g" || str->data == "G")
+    {// take off
+        trigger_ = false;
+        changeFSMExecState(EMERGENCY_STOP, "JOY");
+        //changeFSMExecState(TAKEOFF, "JOY");
     }
     else if(str->data == "a" || str->data == "A")
     {// take off
@@ -145,7 +187,7 @@ void OffboardFSM::joyCallback(const std_msgs::StringConstPtr &str) {
     std::cout<<"str.data : "<< str->data <<std::endl;
 }
 
-void OffboardFSM::changeFSMExecState(OffboardFSM::FSM_EXEC_STATE new_state, string pos_call) {
+void TrajFSM::changeFSMExecState(TrajFSM::FSM_EXEC_STATE new_state, string pos_call) {
     if(new_state == exec_state_)
     {
         continously_called_times_++;
@@ -158,16 +200,16 @@ void OffboardFSM::changeFSMExecState(OffboardFSM::FSM_EXEC_STATE new_state, stri
     cout << "[" + pos_call + "]: from" + state_str[pre_s] + "to" + state_str[int(new_state)] << endl;
 }
 
-std::pair<int, OffboardFSM::FSM_EXEC_STATE > OffboardFSM::timesOfConsecutiveStateCalls() {
-    return std::pair<int, OffboardFSM::FSM_EXEC_STATE >(continously_called_times_, exec_state_);
+std::pair<int, TrajFSM::FSM_EXEC_STATE > TrajFSM::timesOfConsecutiveStateCalls() {
+    return std::pair<int, TrajFSM::FSM_EXEC_STATE >(continously_called_times_, exec_state_);
 }
 
-void OffboardFSM::printFSMExecState() {
+void TrajFSM::printFSMExecState() {
     static string state_str[6] = {"INIT", "TAKEOFF", "LOITER","MISSION", "EMERGENCY_STOP", "LAND"};
      cout << "[FSM]: state: " << state_str[int(exec_state_)] << endl;
 }
 
-void OffboardFSM::execFSMCallback(const ros::TimerEvent &e) {
+void TrajFSM::execFSMCallback(const ros::TimerEvent &e) {
     static  int fsm_num = 0;
     fsm_num++;
     if(fsm_num == 50)
@@ -184,31 +226,35 @@ void OffboardFSM::execFSMCallback(const ros::TimerEvent &e) {
             if(!trigger_){
                 return;
             }
+
+            local_pos_pub_.publish(home_pose_);
             //ROS_INFO("START INIT");
              offbset_mode_.request.custom_mode = "OFFBOARD";
              arm_cmd_.request.value = true;
             if(flag_simulation_)
             {
-                ROS_INFO("START INIT");
+                // ROS_INFO("START INIT");
                 if( current_state_.mode != "OFFBOARD")
                     setmode_client_.call(offbset_mode_);
                 else ROS_INFO("OFFB ENABLE");
                 if(!current_state_.armed)
                     arming_client_.call(arm_cmd_);
                 else ROS_INFO("ARMED");
-                ros::spinOnce();
+                
             }
-
-            local_pos_pub_.publish(home_pose_);
+            
             if(current_state_.armed && current_state_.mode == "OFFBOARD")
             {
                 takeoff_pose_ = local_position_;
-                takeoff_pose_.pose.position.z = local_position_.pose.position.z + 1.0;
+                takeoff_pose_.pose.position.z = local_position_.pose.position.z + takeoff_height_;
 
                 home_pose_ = local_position_;
+                
                 changeFSMExecState(TAKEOFF, "FSM");
+                
             }
                 
+            ros::spinOnce();    
 
             break;
         }
@@ -233,16 +279,16 @@ void OffboardFSM::execFSMCallback(const ros::TimerEvent &e) {
                 changeFSMExecState(LOITER, "FSM");
             }
 
-            if(image_yaw_state_ == 1)
-            {
-                loiter_pos_.pose.orientation = tf::createQuaternionMsgFromYaw(5.0*3.1415926/180.0);
-            }else loiter_pos_.pose.orientation = tf::createQuaternionMsgFromYaw(0);
+            // if(image_yaw_state_ == 1)
+            // {
+            //     loiter_pos_.pose.orientation = tf::createQuaternionMsgFromYaw(5.0*3.1415926/180.0);
+            // }else loiter_pos_.pose.orientation = tf::createQuaternionMsgFromYaw(0);
 
             local_pos_pub_.publish(loiter_pos_);
 
             time_mission_ = ros::Time::now();
 
-            if(start_mission_)
+            if(has_quad_cmd_)
             {
                 changeFSMExecState(MISSION, "FSM");
                 //start_mission_ = false;
@@ -252,11 +298,17 @@ void OffboardFSM::execFSMCallback(const ros::TimerEvent &e) {
 
         case MISSION:
         {
+            
             execMission();
-
             if(flag_emergency_stop_){
+                has_quad_cmd_ = false;
                 changeFSMExecState(EMERGENCY_STOP, "FSM");
             }
+
+            if(!has_quad_cmd_){
+                changeFSMExecState(LOITER, "FSM");
+            }
+            
             break;
         }
 
@@ -272,28 +324,38 @@ void OffboardFSM::execFSMCallback(const ros::TimerEvent &e) {
         case LAND:
         {
             offbset_mode_.request.custom_mode = "AUTO.LAND";
+            
             if( setmode_client_.call(offbset_mode_) && offbset_mode_.response.mode_sent)
-            {
-                ROS_INFO("land enabled");
+            {                    
+            }
+            if(extended_state_.landed_state == mavros_msgs::ExtendedState::LANDED_STATE_ON_GROUND){
+                trigger_ = false;
+                changeFSMExecState(INIT, "FSM");
             }
             break;
         }
 
     }
-}
-
-void OffboardFSM::execMission() {
-    //pos_controller_->set_target_pos(target_pos_.position.x, target_pos_.position.y,target_pos_.position.z)；
-    double tar_yaw, tmp1,tmp2;
-
-    double dT = (ros::Time::now() - time_mission_).toSec();
-    time_mission_ = ros::Time::now();
-    dT = min(0.1, max(dT, 5e-4));
 
     
+}
 
-    att_raw_ = pos_controller_->update_control_val(target_pos_.position, local_position_.pose, local_vel_.twist, dT);
-    //att_raw_.orientation = tf::createQuaternionMsgFromRollPitchYaw(0,0,0);
-    local_att_pub_.publish(att_raw_);
+void TrajFSM::execMission() {
+    // judge if rcv timeout
+    if((ros::Time::now() - time_quad_cmd_).toSec() > 0.5)
+    {
+        has_quad_cmd_ = false;
+        return;
+    }
+    //if(!has_quad_cmd_) return;
+    local_raw_.header.stamp = ros::Time::now();
+    local_raw_.position = quad_command_.position;
+    local_raw_.velocity = quad_command_.velocity;
+    local_raw_.acceleration_or_force = quad_command_.acceleration;
+    
+    local_raw_.yaw = quad_command_.yaw;
+    local_raw_.yaw_rate = quad_command_.yaw_dot;
+    
+    local_pos_raw_pub_.publish(local_raw_);
 }
 
