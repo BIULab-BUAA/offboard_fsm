@@ -232,10 +232,7 @@ ExtendedState_Data_t::ExtendedState_Data_t()
 
 }
 
-void ExtendedState_Data_t::feed(mavros_msgs::ExtendedStateConstPtr pMsg)
-{
-    current_extended_state = *pMsg;
-}
+
 
 Command_Data_t::Command_Data_t()
 {

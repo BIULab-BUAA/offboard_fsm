@@ -3,8 +3,8 @@
 '''
 Author: xindong324
 Date: 2022-09-19 19:50:43
-LastEditors: xindong324
-LastEditTime: 2022-09-27 15:16:41
+LastEditors: xindong324 xindong324@163.com
+LastEditTime: 2023-05-17 11:34:29
 Description: file content
 '''
 import rospy
@@ -25,6 +25,21 @@ last_yaw_ = 0
 last_yaw_dot_ = 0
 time_forward_ = 1.0
 
+acc_radius = 4.5
+time_const = 2
+
+home_pose = PoseStamped()
+flag_has_odom_ = False
+flag_set_circle = False
+
+def positionCallback( msg):
+    global flag_has_odom_, home_pose,time_odom_
+    home_pose = msg
+
+    flag_has_odom_ = True
+    time_odom_ = rospy.Time.now()
+        
+
 def calculate_yaw(yaw_temp, time_now, time_last):
     global last_yaw_, last_yaw_dot_
 
@@ -35,7 +50,6 @@ def calculate_yaw(yaw_temp, time_now, time_last):
     #dir = traj_[0].evaluateDeBoorT(t_cur + time_forward_) - pos  if t_cur + time_forward_ <= traj_duration_  else traj_[0].evaluateDeBoorT(traj_duration_) - pos;
     #yaw_temp = dir.norm() > 0.1 ? atan2(dir(1), dir(0)) : last_yaw_;
     dt = (time_now - time_last)
-    print(dt)
     max_yaw_change = YAW_DOT_MAX_PER_SEC * (time_now - time_last);
 
     yaw = yaw_temp
@@ -67,8 +81,10 @@ def calculate_yaw(yaw_temp, time_now, time_last):
 
 if __name__ == '__main__':
     traj_pub = rospy.Publisher('/position_cmd', PositionCommand, queue_size=1)
+    
     rospy.init_node("keyboard_driver")
     rate = rospy.Rate(100)
+    home_pose_sub = rospy.Subscriber("/mavros/local_position/pose",PoseStamped, callback=positionCallback, queue_size=10)
 
     traj = PositionCommand()
 
@@ -76,21 +92,47 @@ if __name__ == '__main__':
     time_last_ = time.time()
     start_time = time.time()
     last_t = 0
+    start_pose = PoseStamped()
+
+
+    print("get_start")
+    trja_radius = acc_radius/(time_const * time_const)
+    
+    
+
     while not rospy.is_shutdown():
+        if not flag_has_odom_:
+            print("no odom")
+            continue
+
+        if(flag_has_odom_ and not flag_set_circle):
+            start_pose = home_pose
+            circle_center_x = trja_radius + start_pose.pose.position.x
+            circle_center_y = start_pose.pose.position.y
+            flag_set_circle = True
+        
+
+
+        print("start: ", start_pose.pose.position.z)
         now = time.time()
         t = (now - start_time)
         if(t < 1e-6):
             continue
-        # 8 zi
-        traj.position.x = 0.8 * math.sin(2*0.1*t)
-        traj.velocity.x = 0.16 * math.cos(2*0.1*t)
-        traj.acceleration.x = -0.032 * math.sin(2*0.1*t)
-        traj.position.y = 0.8 *math.sin(0.1*t)
-        traj.velocity.y = 0.08 *math.cos(0.1*t)
-        traj.acceleration.y = -0.008*math.sin(0.1*t)
-        traj.position.z = 0.5 * math.sin(0.1*t) + 1
-        traj.velocity.z = 0.05 * math.cos(0.1*t)
-        traj.acceleration.z = -0.005 * math.sin(0.1*t)
+        
+        traj.position.z = start_pose.pose.position.z;
+        traj.velocity.z = 0
+        traj.acceleration.z = 0
+
+        time_const_2 = time_const * time_const
+
+
+        traj.position.x = acc_radius/(time_const_2) * math.cos(time_const * t) + circle_center_x
+        traj.position.y = acc_radius/time_const_2 * math.sin(time_const *t) + circle_center_y
+        traj.velocity.x = -acc_radius/time_const * math.sin(time_const *t)
+        traj.velocity.y = acc_radius/time_const * math.cos(time_const *t)
+        traj.acceleration.x = -acc_radius * math.cos(time_const *t)
+        traj.acceleration.y = -acc_radius * math.sin(time_const *t)
+
 
         dx = 0.8*math.sin(2*0.1*(t+1)) - 0.8*math.sin(2*0.1*t)
         dy =  0.8*math.sin(0.1*(t+1)) -  0.8*math.sin(0.1*t)
@@ -101,10 +143,11 @@ if __name__ == '__main__':
         cur_yaw, cur_yawrate = calculate_yaw(yaw_temp, t, last_t)
 
         last_t =  t
-        traj.yaw = cur_yaw
-        traj.yaw_dot = cur_yawrate
-        print("yaw: ", cur_yaw, "yaw_rate: ",cur_yawrate)
+        # traj.yaw = cur_yaw
+        # traj.yaw_dot = cur_yawrate
+        # print("yaw: ", cur_yaw, "yaw_rate: ",cur_yawrate)
 
         traj_pub.publish(traj)
         
         rate.sleep()
+    rospy.spin()

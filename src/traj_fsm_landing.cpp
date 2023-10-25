@@ -1,8 +1,8 @@
 /*
  * @Author: xindong324
  * @Date: 2022-03-03 21:57:53
- * @LastEditors: xindong324 xindong324@163.com
- * @LastEditTime: 2023-10-25 09:30:10
+ * @LastEditors: xindong324
+ * @LastEditTime: 2022-09-19 20:32:48
  * @Description: file content
  */
 #include "offboard_sample/traj_fsm.h"
@@ -263,7 +263,7 @@ void TrajFSM::execFSMCallback(const ros::TimerEvent &e) {
         {
 
             local_pos_pub_.publish(takeoff_pose_);
-            if(reached_target_position(takeoff_pose_.pose.position, local_position_.pose.position))
+            if(PosController::reached_target_position(takeoff_pose_.pose.position, local_position_.pose.position))
             {
                 changeFSMExecState(LOITER, "FSM");
             }

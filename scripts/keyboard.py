@@ -6,6 +6,11 @@ import rospy
 import sys, select, tty, termios
 from std_msgs.msg import String
 
+
+def shutdown():
+    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_attr)
+
+
 def getKey():
     tty.setraw(sys.stdin.fileno())
     rlist, _, _ = select.select([sys.stdin], [], [], 0.1)
@@ -17,8 +22,10 @@ def getKey():
     return key
 
 if __name__ == '__main__':
+    global old_attr
     key_pub = rospy.Publisher('keys', String, queue_size=1)
     rospy.init_node("keyboard_driver")
+    rospy.on_shutdown(shutdown)
     rate = rospy.Rate(100)
     old_attr = termios.tcgetattr(sys.stdin)
     tty.setcbreak(sys.stdin.fileno())

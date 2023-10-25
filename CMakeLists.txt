@@ -4,7 +4,6 @@ project(offboard_sample)
 ## Compile as C++11, supported in ROS Kinetic and newer
 set(CMAKE_BUILD_TYPE "Debug")
 SET(CMAKE_BUILD_TYPE "RelWithDebInfo")
-ADD_COMPILE_OPTIONS(-std=c++11 )
 ADD_COMPILE_OPTIONS(-std=c++14 )
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 
@@ -77,3 +76,33 @@ add_dependencies(offb_att ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_
 target_link_libraries(offb_att
   ${catkin_LIBRARIES}
 )
+
+
+add_executable(offbvel_node
+  include/offboard_sample/darc_height_controller.h
+  src/darc_height_controller.cpp
+  src/offbvel_node.cpp
+  src/pos_controller.cpp
+  src/offboard_fsm.cpp
+  src/pid.cpp
+  src/vel_fsm_test.cpp
+)
+add_dependencies(offbvel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(offbvel_node
+  ${catkin_LIBRARIES}
+)
+
+add_executable(offbvel_node_sim
+  include/offboard_sample/darc_height_controller.h
+  src/darc_height_controller.cpp
+  src/offbvel_node_sim.cpp
+  src/pos_controller.cpp
+  src/offboard_fsm.cpp
+  src/pid.cpp
+  src/vel_fsm.cpp
+)
+add_dependencies(offbvel_node_sim ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(offbvel_node_sim
+  ${catkin_LIBRARIES}
+)
+
