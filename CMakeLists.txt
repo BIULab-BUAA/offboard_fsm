@@ -39,70 +39,13 @@ include_directories(
     ${Eigen3_INCLUDE_DIR}
 )
 
-add_library(offboard_sample
-  src/pos_controller.cpp
-  src/offboard_fsm.cpp
-  src/pid.cpp
-)
-add_dependencies(offboard_sample ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(offboard_sample
-  ${catkin_LIBRARIES}
-)
 
 add_executable(offb_node
-  include/offboard_sample/darc_height_controller.h
-  src/darc_height_controller.cpp
   src/offb_node.cpp
-  src/pos_controller.cpp
-  src/offboard_fsm.cpp
-  src/pid.cpp
   src/traj_fsm.cpp
 )
 add_dependencies(offb_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(offb_node
-  ${catkin_LIBRARIES}
-)
-
-
-add_executable(offb_att
-  src/PX4CtrlParam.cpp 
-  src/controller.cpp 
-  src/traj_fsm_att.cpp
-  src/offboard_att.cpp
-  src/input.cpp
-  
-)
-add_dependencies(offb_att ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(offb_att
-  ${catkin_LIBRARIES}
-)
-
-
-add_executable(offbvel_node
-  include/offboard_sample/darc_height_controller.h
-  src/darc_height_controller.cpp
-  src/offbvel_node.cpp
-  src/pos_controller.cpp
-  src/offboard_fsm.cpp
-  src/pid.cpp
-  src/vel_fsm_test.cpp
-)
-add_dependencies(offbvel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(offbvel_node
-  ${catkin_LIBRARIES}
-)
-
-add_executable(offbvel_node_sim
-  include/offboard_sample/darc_height_controller.h
-  src/darc_height_controller.cpp
-  src/offbvel_node_sim.cpp
-  src/pos_controller.cpp
-  src/offboard_fsm.cpp
-  src/pid.cpp
-  src/vel_fsm.cpp
-)
-add_dependencies(offbvel_node_sim ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(offbvel_node_sim
   ${catkin_LIBRARIES}
 )
 

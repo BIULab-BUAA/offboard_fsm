@@ -1,9 +1,0 @@
-<launch> 
-	<node pkg="offboard_sample" type="offbvel_node_sim" name="offbvel_node_sim" output="screen">
-		<!--<remap from="~pos_cmd" to="/planning/pos_cmd"/>-->
-		<param name="takeoff_height" value="1"/>
-		
-	</node> 
-	<rosparam file="$(find offboard_sample)/cfg/mission_cfg.yaml" command="load" />
-</launch>
-                                                                                                                     
