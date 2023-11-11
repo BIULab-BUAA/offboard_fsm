@@ -2,7 +2,7 @@
  * @Author: xindong324
  * @Date: 2022-03-03 21:57:53
  * @LastEditors: xindong324 xindong324@163.com
- * @LastEditTime: 2023-10-25 09:30:10
+ * @LastEditTime: 2023-11-09 12:08:24
  * @Description: file content
  */
 #include "offboard_sample/traj_fsm.h"
@@ -50,6 +50,7 @@ void TrajFSM::init(ros::NodeHandle &nh) {
     local_pos_pub_ =  nh.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
     local_pos_raw_pub_ = nh.advertise<mavros_msgs::PositionTarget>("/mavros/setpoint_raw/local", 10);
     local_att_pub_ = nh.advertise<mavros_msgs::AttitudeTarget>("/mavros/setpoint_raw/attitude", 10);
+    state_pub_ = nh.advertise<std_msgs::String>("/state_uav", 10);
 
     arming_client_ = nh.serviceClient<mavros_msgs::CommandBool>("/mavros/cmd/arming");
     landing_client_ = nh.serviceClient<mavros_msgs::CommandTOL>("/mavros/cmd/land");
@@ -207,6 +208,14 @@ std::pair<int, TrajFSM::FSM_EXEC_STATE > TrajFSM::timesOfConsecutiveStateCalls()
 void TrajFSM::printFSMExecState() {
     static string state_str[6] = {"INIT", "TAKEOFF", "LOITER","MISSION", "EMERGENCY_STOP", "LAND"};
      cout << "[FSM]: state: " << state_str[int(exec_state_)] << endl;
+     
+}
+
+void TrajFSM::pubFSMExecState() {
+    static string state_str[6] = {"INIT", "TAKEOFF", "LOITER","MISSION", "EMERGENCY_STOP", "LAND"};
+     cout << "[FSM]: state: " << state_str[int(exec_state_)] << endl;
+     state_uav_.data = state_str[int(exec_state_)];
+     state_pub_.publish(state_uav_);
 }
 
 void TrajFSM::execFSMCallback(const ros::TimerEvent &e) {
@@ -214,7 +223,7 @@ void TrajFSM::execFSMCallback(const ros::TimerEvent &e) {
     fsm_num++;
     if(fsm_num == 50)
     {
-        printFSMExecState();
+        pubFSMExecState();
 
         fsm_num = 0;
     }
