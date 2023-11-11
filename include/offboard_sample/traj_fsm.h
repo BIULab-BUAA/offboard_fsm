@@ -2,7 +2,7 @@
  * @Author: xindong324
  * @Date: 2022-03-03 21:57:53
  * @LastEditors: xindong324 xindong324@163.com
- * @LastEditTime: 2023-10-25 09:31:53
+ * @LastEditTime: 2023-11-11 10:23:18
  * @Description: file content
  */
 #ifndef _TRAJ_FSM__H
@@ -51,6 +51,7 @@ private:
     int continously_called_times_{0};
     int image_yaw_state_{0};
     bool trigger_, flag_simulation_, start_mission_, flag_emergency_stop_, has_quad_cmd_;
+    bool use_telem_;
 
     /** ctrl data **/
     mavros_msgs::State current_state_;
@@ -65,6 +66,7 @@ private:
     mavros_msgs::PositionTarget local_raw_;
     mavros_msgs::AttitudeTarget att_raw_;
     quadrotor_msgs::PositionCommand quad_command_;
+    std_msgs::String state_uav_;
 
 
 
@@ -74,13 +76,14 @@ private:
     ros::Time time_quad_cmd_;
     ros::Time time_mission_;
     ros::Subscriber state_sub_, extent_state_sub_, local_position_sub_, local_velocity_sub_, joy_sub_, quad_cmd_sub_;
-    ros::Publisher local_pos_pub_, local_att_pub_, local_pos_raw_pub_, marker_pub_, local_vel_pub_;
+    ros::Publisher local_pos_pub_, local_att_pub_, local_pos_raw_pub_, marker_pub_, local_vel_pub_, state_pub_;
     ros::ServiceClient arming_client_, setmode_client_, landing_client_;
 
     /*return value : std::pair <times of the same state be continuously called, current continuously called state>*/
     void changeFSMExecState(FSM_EXEC_STATE new_state, string pos_call);
     std::pair<int, TrajFSM::FSM_EXEC_STATE > timesOfConsecutiveStateCalls();
     void printFSMExecState();
+    void pubFSMExecState();
     /* ROS FUNCTIONS */
     void execFSMCallback(const ros::TimerEvent &e);
 
