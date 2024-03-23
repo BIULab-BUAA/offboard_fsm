@@ -1,10 +1,17 @@
 <launch> 
-	<node pkg="offboard_sample" type="offb_node" name="offb_node" output="screen">
+    <arg name="takeoff_height" default="1" />
+    <arg name="flag_simulation" default="true" />
+	<node pkg="offboard_sample" exec="offb_node" name="offb_node" output="screen">
 		<!--<remap from="~pos_cmd" to="/planning/pos_cmd"/>-->
-		<param name="takeoff_height" value="1"/>
-		<remap from="~pos_cmd" to="/planning/pos_cmd"/>
+		<!-- <param name="takeoff_height" value="var takeoff_height"/>
+        <param name="flag_simulation" value="var flag_simulation"/> -->
+
+        <!-- <param name="flag_simulation" value="true"/> -->
+		<!-- <remap from="~pos_cmd" to="/planning/pos_cmd"/> -->
+        <!-- <param from="$(find-pkg-share offboard_sample)/cfg/mission_cfg.yaml" /> -->
 	</node> 
-	<node pkg="offboard_sample" type="keyboard.py" name="keyboard"  />
-	<rosparam file="$(find offboard_sample)/cfg/mission_cfg.yaml" command="load" />
+
+    <node pkg="offboard_sample" exec="key_board2.py" name="key_board" output="screen"/>
+   
 </launch>
-                                                                                                                     
+           

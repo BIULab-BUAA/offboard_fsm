@@ -1,11 +1,23 @@
-
 #############################  offb_fsm
-offb_fsm/flag_simulation: true
-offb_fsm/use_telem: false
-offb_fsm/target_x: 0.2
-offb_fsm/target_y: 0.1
-offb_fsm/target_z: 1
-offb_fsm/target_yaw: 0.0
-offb_fsm/target_thres: 0.1
+offb_node: 
+  ros__parameters:
+    flag_simulation: true
+    use_telem: false
+    target_x: 0.2
+    target_y: 0.1
+    target_z: 1
+    target_yaw: 0.0
+    target_thres: 0.1
+serial: 
+  ros__parameters:
+    ser_name: "/dev/ttyUSB1"
 
-serial/ser_name: "/dev/ttyUSB1"
+# offb_fsm/flag_simulation: true
+# offb_fsm/use_telem: false
+# offb_fsm/target_x: 0.2
+# offb_fsm/target_y: 0.1
+# offb_fsm/target_z: 1
+# offb_fsm/target_yaw: 0.0
+# offb_fsm/target_thres: 0.1
+
+# serial/ser_name: "/dev/ttyUSB1"

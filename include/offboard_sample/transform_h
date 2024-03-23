@@ -1,0 +1,53 @@
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/LinearMath/Matrix3x3.h"
+#include "tf2/LinearMath/EulerAngles.h"
+
+ #include "geometry_msgs/msg/quaternion.hpp"
+#include "geometry_msgs/msg/vector3.hpp"
+#include "tf2_ros/tf2_ros.h"
+ 
+geometry_msgs::msg::Quaternion rpy_to_quaternion(const geometry_msgs::msg::Vector3 &rpy) {
+    tf2::Quaternion quat;
+    tf2::Matrix3x3 matrix(
+        tf2::Quaternion(rpy.x, rpy.y, rpy.z, 0.0)
+    );
+    matrix.getRotation(quat);
+ 
+    geometry_msgs::msg::Quaternion quat_msg;
+    tf2::quaternionTFToMsg(quat, quat_msg);
+    return quat_msg;
+}
+ 
+geometry_msgs::msg::Vector3 quaternion_to_rpy(const geometry_msgs::msg::Quaternion &quat_msg) {
+    tf2::Quaternion quat;
+    tf2::convert(quat_msg, quat);
+ 
+    tf2::Matrix3x3 matrix(quat);
+    double roll, pitch, yaw;
+    matrix.getRPY(roll, pitch, yaw);
+ 
+    geometry_msgs::msg::Vector3 rpy;
+    rpy.x = roll;
+    rpy.y = pitch;
+    rpy.z = yaw;
+    return rpy;
+}
+
+
+// rpy转四元数
+tf2::Quaternion rpy_to_quaternion(double roll, double pitch, double yaw) {
+    tf2::Quaternion quat;
+    tf2::Matrix3x3 matrix;
+    matrix.setEulerYPR(yaw, pitch, roll);
+    matrix.getRotation(quat);
+    return quat;
+}
+ 
+// 四元数转rpy
+tf2::Matrix3x3 quaternion_to_rpy(const tf2::Quaternion& q) {
+    tf2::Matrix3x3 matrix;
+    matrix.setRotation(q);
+    double roll, pitch, yaw;
+    matrix.getEulerYPR(yaw, pitch, roll);
+    return matrix;
+}
