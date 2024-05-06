@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(offboard_sample)
+project(offboard_exec)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 set(CMAKE_BUILD_TYPE "Debug")
@@ -19,7 +19,7 @@ find_package(Eigen3 REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES offboard_sample
+  LIBRARIES offboard_exec
   CATKIN_DEPENDS roscpp std_msgs
 #  DEPENDS system_lib
 )
@@ -39,13 +39,16 @@ include_directories(
     ${Eigen3_INCLUDE_DIR}
 )
 
-
-add_executable(offb_node
-  src/offb_node.cpp
-  src/traj_fsm.cpp
+link_directories(
+        ${catkin_LIB_DIRS} lib
 )
-add_dependencies(offb_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(offb_node
+
+add_executable(offb_node3
+  src/offb_node.cpp
+)
+add_dependencies(offb_node3 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(offb_node3
   ${catkin_LIBRARIES}
+  liboffboard_release.so
 )
 
